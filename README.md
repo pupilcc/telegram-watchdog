@@ -163,6 +163,9 @@ npm install
 # 部署到 Cloudflare Workers
 # 第一次运行会出现登录链接，浏览器打开后授权登录，再重新运行命令
 npm run deploy
+
+# 部署成功后，会输出 Worker 的 URL
+# 例如：https://telegram-watchdog.your-account.workers.dev
 ```
 
 ### 步骤 3：创建 Telegram Bot
