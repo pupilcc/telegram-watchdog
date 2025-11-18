@@ -58,7 +58,7 @@ export const messageFilterMiddleware = (env: Env) => async (ctx: Context, next: 
         await ctx.api.sendMessage(
           env.ADMIN_GID,
           `🚨 垃圾信息警告\n\n` +
-          `发送者: ${senderName} (ID: ${senderId})\n` +
+          `发送者: ${senderName}${senderUser.username ? ` (@${senderUser.username})` : ''} (ID: ${senderId})\n` +
           `AI 判定: ${judgment}\n` +
           `时间: ${utcPlus8Time}`,
           { reply_to_message_id: forwardedMessage.message_id }
