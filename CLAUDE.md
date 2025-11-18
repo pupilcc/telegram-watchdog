@@ -62,8 +62,7 @@ The bot provides two main features:
 - **message_mappings table**: Maps forwarded message IDs to original sender chat IDs
   - `forwarded_message_id` (PRIMARY KEY): The message ID when forwarded to admin
   - `original_user_chat_id` (TEXT): The user's chat ID to send replies back to
-  - `created_at` (INTEGER): Timestamp for cleanup
-- Includes `cleanupExpiredMappings()` function (currently not scheduled, but designed for periodic cleanup of 24h+ old mappings)
+  - `created_at` (INTEGER): Timestamp for record creation
 
 ### LLM Integration (src/llm/)
 **client.ts:**

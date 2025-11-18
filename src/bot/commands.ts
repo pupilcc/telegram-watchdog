@@ -42,7 +42,7 @@ async function handleTrustCommand(ctx: Context, env: Env): Promise<void> {
       .first<{ original_user_chat_id: string }>();
 
     if (!mapping) {
-      await ctx.reply('❌ 无法找到原始用户（消息映射已过期或不存在）');
+      await ctx.reply('❌ 无法找到原始用户');
       return;
     }
 
@@ -87,7 +87,7 @@ async function handleUntrustCommand(ctx: Context, env: Env): Promise<void> {
       .first<{ original_user_chat_id: string }>();
 
     if (!mapping) {
-      await ctx.reply('❌ 无法找到原始用户（消息映射已过期或不存在）');
+      await ctx.reply('❌ 无法找到原始用户');
       return;
     }
 

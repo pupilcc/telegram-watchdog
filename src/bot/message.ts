@@ -78,7 +78,7 @@ export const messageHandler = (env: Env) => async (ctx: Context) => {
       `).bind(replyToMessage.message_id).first<{ original_user_chat_id: string }>();
 
       if (!result) {
-        await ctx.reply('无法找到原始用户信息，该消息可能已过期。');
+        await ctx.reply('无法找到原始用户信息。');
         return;
       }
 

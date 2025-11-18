@@ -129,7 +129,7 @@ graph TD
     B -->|否| C[提示需要回复消息]
     B -->|是| D[从 D1 查询原始用户 ID]
     D --> E{找到映射?}
-    E -->|否| F[提示消息已过期]
+    E -->|否| F[提示未找到映射]
     E -->|是| G[发送回复给原始用户]
     G --> H[回复成功]
 ```
@@ -232,9 +232,6 @@ export const WHITELIST_CONFIG = {
 
   // 自动加白时是否通知管理员（默认 true）
   NOTIFY_ADMIN_ON_AUTO_WHITELIST: true,
-
-  // 消息映射保留天数（默认 7 天）
-  MAPPING_RETENTION_DAYS: 7,
 };
 ```
 

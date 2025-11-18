@@ -14,12 +14,6 @@ export async function initDatabase(env: Env): Promise<void> {
     )
   `).run();
 
-  // 创建索引用于清理过期数据
-  await env.DB.prepare(`
-    CREATE INDEX IF NOT EXISTS idx_created_at
-    ON message_mappings(created_at)
-  `).run();
-
   // 创建用户信任度表
   await env.DB.prepare(`
     CREATE TABLE IF NOT EXISTS user_trust (
@@ -42,14 +36,3 @@ export async function initDatabase(env: Env): Promise<void> {
   `).run();
 }
 
-/**
- * 清理过期的消息映射（超过24小时）
- * @param env - 环境变量
- */
-export async function cleanupExpiredMappings(env: Env): Promise<void> {
-  const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
-  await env.DB.prepare(`
-    DELETE FROM message_mappings
-    WHERE created_at < ?
-  `).bind(oneDayAgo).run();
-}

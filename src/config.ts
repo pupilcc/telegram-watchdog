@@ -10,9 +10,6 @@ export const WHITELIST_CONFIG = {
 
   /** Whether to notify admin when a user is automatically whitelisted */
   NOTIFY_ADMIN_ON_AUTO_WHITELIST: true,
-
-  /** Message mapping retention in days (affects /trust command availability) */
-  MAPPING_RETENTION_DAYS: 7,
 } as const;
 
 /**
