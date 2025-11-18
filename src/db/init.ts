@@ -19,6 +19,27 @@ export async function initDatabase(env: Env): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_created_at
     ON message_mappings(created_at)
   `).run();
+
+  // 创建用户信任度表
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS user_trust (
+      user_id TEXT PRIMARY KEY,
+      username TEXT,
+      trust_status TEXT NOT NULL,
+      consecutive_clean_count INTEGER DEFAULT 0,
+      total_spam_count INTEGER DEFAULT 0,
+      whitelisted_at INTEGER,
+      whitelisted_by TEXT,
+      last_message_at INTEGER,
+      created_at INTEGER NOT NULL
+    )
+  `).run();
+
+  // 创建信任状态索引
+  await env.DB.prepare(`
+    CREATE INDEX IF NOT EXISTS idx_trust_status
+    ON user_trust(trust_status)
+  `).run();
 }
 
 /**

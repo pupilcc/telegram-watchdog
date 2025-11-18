@@ -1,6 +1,14 @@
 import { Context, NextFunction } from "grammy"; // 导入 NextFunction 类型
 import { Env } from '@/env';
 import { detectSpam } from '@/llm/client';
+import {
+  getUserTrust,
+  createUserTrust,
+  incrementCleanCount,
+  recordSpam,
+  checkAndPromoteToWhitelist,
+} from '@/db/trust';
+import { WHITELIST_CONFIG } from '@/config';
 
 
 export const messageFilterMiddleware = (env: Env) => async (ctx: Context, next: NextFunction) => {
@@ -26,11 +34,40 @@ export const messageFilterMiddleware = (env: Env) => async (ctx: Context, next: 
   const chatId = ctx.chat?.id;
 
   try {
+    // 查询用户信任状态
+    let trustInfo = await getUserTrust(env.DB, senderId.toString());
+
+    // 如果是首次发消息的用户，创建记录
+    if (!trustInfo) {
+      await createUserTrust(env.DB, senderId.toString(), senderUser.username);
+      trustInfo = {
+        user_id: senderId.toString(),
+        username: senderUser.username || null,
+        trust_status: 'new',
+        consecutive_clean_count: 0,
+        total_spam_count: 0,
+        whitelisted_at: null,
+        whitelisted_by: null,
+        last_message_at: Date.now(),
+        created_at: Date.now(),
+      };
+    }
+
+    // 如果是白名单用户，直接放行
+    if (trustInfo.trust_status === 'trusted') {
+      await next();
+      return;
+    }
+
+    // 非白名单用户需要进行 AI 检测
     // 调用 AI API 判断是否为垃圾信息
     const judgment = await detectSpam(env, senderName, messageText);
 
     // 如果判定为垃圾信息
     if (judgment.startsWith('SPAM')) {
+      // 记录垃圾消息（重置连续通过次数，增加垃圾消息计数）
+      await recordSpam(env.DB, senderId.toString());
+
       // 发送到管理群组（如果配置了管理群组 ID）
       if (env.ADMIN_GID && chatId) {
         // 先转发原消息到管理群组
@@ -72,6 +109,20 @@ export const messageFilterMiddleware = (env: Env) => async (ctx: Context, next: 
       );
 
       return; // 阻止消息传递到后续处理函数
+    }
+
+    // 消息通过 AI 检测，增加连续通过次数
+    await incrementCleanCount(env.DB, senderId.toString());
+
+    // 检查是否达到自动加白条件
+    const wasPromoted = await checkAndPromoteToWhitelist(env.DB, senderId.toString());
+
+    // 如果用户被自动加白，可选通知管理员
+    if (wasPromoted && WHITELIST_CONFIG.NOTIFY_ADMIN_ON_AUTO_WHITELIST && env.ADMIN_UID) {
+      await ctx.api.sendMessage(
+        env.ADMIN_UID,
+        `✅ 用户 ${senderName}${senderUser.username ? ` (@${senderUser.username})` : ''} 已自动加入白名单（连续通过 ${WHITELIST_CONFIG.REQUIRED_CLEAN_COUNT} 次检测）`
+      );
     }
 
     // 消息通过过滤，继续处理

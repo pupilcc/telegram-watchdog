@@ -5,6 +5,7 @@ import { startCommand } from '@/bot/command';
 import { messageFilterMiddleware } from '@/bot/middleware';
 import { messageHandler } from '@/bot/message';
 import { initDatabase } from '@/db/init';
+import { registerAdminCommands } from '@/bot/commands';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -24,6 +25,9 @@ app.use(async (c, next) => {
     await initDatabase(c.env);
 
     await bot.api.setWebhook(c.env.DOMAIN + WEBHOOK_PATH, {"secret_token": c.env.BOT_SECRET});
+
+    // 注册管理员命令
+    registerAdminCommands(bot, c.env);
 
     bot.use(messageFilterMiddleware(c.env))
 
