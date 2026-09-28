@@ -11,9 +11,11 @@ services:
       BOT_SECRET: ${BOT_SECRET}
       ADMIN_UID: ${ADMIN_UID}
       ADMIN_GID: ${ADMIN_GID:-}
-      LLM_API: ${LLM_API}
+      SPAM_PROVIDER: ${SPAM_PROVIDER:-llm}
+      LLM_API: ${LLM_API:-}
       LLM_MODEL: ${LLM_MODEL:-gpt-3.5-turbo}
-      LLM_KEY: ${LLM_KEY}
+      LLM_KEY: ${LLM_KEY:-}
+      JEV_KEY: ${JEV_KEY:-}
     volumes:
       - watchdog-data:/data
 

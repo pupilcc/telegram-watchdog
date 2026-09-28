@@ -66,7 +66,14 @@ export const messageFilterMiddleware = (env: Env) => async (ctx: Context, next: 
 
     // 非白名单用户需要进行 AI 检测
     // 调用 AI API 判断是否为垃圾信息
-    const judgment = await detectSpam(env, senderName, messageText);
+    let judgment: string;
+    try {
+      judgment = await detectSpam(env, senderName, messageText);
+    } catch (error) {
+      console.error('Spam detection failed:', { senderId, chatId }, error);
+      await next();
+      return;
+    }
 
     // 如果判定为垃圾信息
     if (judgment.startsWith('SPAM')) {
@@ -145,7 +152,6 @@ export const messageFilterMiddleware = (env: Env) => async (ctx: Context, next: 
     // 消息通过过滤，继续处理
     await next();
   } catch (error) {
-    // 出错时默认放行消息，避免误杀
     console.error('Message filter middleware failed:', {
       senderId,
       chatId,

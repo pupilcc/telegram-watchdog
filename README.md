@@ -47,7 +47,7 @@ Telegram Watchdog 是一个功能强大的 Telegram 机器人，主要用于：
 1. **Telegram Bot Token** — 通过 [@BotFather](https://t.me/botfather) 创建
 2. **管理员 Telegram 账户** — 用于接收转发消息
 3. **管理群组**（推荐启用 Forum 模式）— 用于接收垃圾警报和按用户分 Topic
-4. **LLM API 服务** — OpenAI 或兼容 API（提供 Base URL 和 API Key）
+4. **垃圾检测 API 服务** — OpenAI 兼容 API 或 TypeSafe Jev（提供相应 API Key）
 
 部署方式特定要求：
 
@@ -94,11 +94,15 @@ Telegram Watchdog 是一个功能强大的 Telegram 机器人，主要用于：
 | `BOT_SECRET` | ✅ | Webhook 验证密钥（自己生成的随机字符串） | 任意随机字符串 |
 | `ADMIN_UID` | ✅ | 管理员 Telegram 用户 ID | `123456789` |
 | `ADMIN_GID` | ❌ | 管理群组 ID（启用后开启 Forum Topic 模式） | `-1001234567890` |
-| `LLM_API` | ✅ | LLM API Base URL | `https://api.openai.com/v1` |
-| `LLM_MODEL` | ✅ | LLM 模型名称 | `gpt-3.5-turbo` |
-| `LLM_KEY` | ✅ | LLM API Key | `sk-...` |
+| `SPAM_PROVIDER` | ❌ | 垃圾检测服务，默认 `llm`；可选 `jev` | `jev` |
+| `LLM_API` | 仅 `llm` | LLM API Base URL | `https://api.openai.com/v1` |
+| `LLM_MODEL` | ❌ | LLM 模型名称，默认 `gpt-3.5-turbo` | `gpt-3.5-turbo` |
+| `LLM_KEY` | 仅 `llm` | LLM API Key | `sk-...` |
+| `JEV_KEY` | 仅 `jev` | TypeSafe API Key；Jev 使用 `jev-latest` | TypeSafe API Key |
 | `PORT` | ❌（仅 Docker） | 容器监听端口，默认 `3000` | `3000` |
 | `DB_PATH` | ❌（仅 Docker） | SQLite 文件路径，默认 `/data/watchdog.db` | `/data/watchdog.db` |
+
+使用 Jev 时设置 `SPAM_PROVIDER=jev` 和 `JEV_KEY`。Jev 的垃圾概率达到 0.85 时拦截；未达到则放行。API 调用失败仍按现有规则放行消息。
 
 ### 方式 A：Cloudflare Workers
 
@@ -126,7 +130,7 @@ npm run deploy
 #### A4. 配置环境变量（在 Cloudflare 仪表板）
 
 1. 进入 **Workers & Pages** → 选择你的 Worker → **设置** → **变量和机密**
-2. 选择 **添加** → **密钥** 类型，逐个录入上面环境变量清单中的值（除 `PORT` / `DB_PATH` 外都需要）
+2. 选择 **添加** → **密钥** 类型，录入基础变量和所选垃圾检测服务需要的变量（参见上表）
 
 ### 方式 B：Docker 自托管
 
@@ -149,7 +153,7 @@ curl -O https://raw.githubusercontent.com/pupilcc/telegram-watchdog/master/docke
 curl -o .env https://raw.githubusercontent.com/pupilcc/telegram-watchdog/master/.env.example
 ```
 
-然后编辑 `.env`，填入 `DOMAIN` / `BOT_TOKEN` / `BOT_SECRET` / `ADMIN_UID` / `LLM_KEY` 等（参考上面的[环境变量清单](#环境变量清单)）。
+然后编辑 `.env`，填入 `DOMAIN` / `BOT_TOKEN` / `BOT_SECRET` / `ADMIN_UID` 和所选服务的 API Key（参考上面的[环境变量清单](#环境变量清单)）。
 
 #### B2. 准备公网 HTTPS 反代
 
@@ -587,9 +591,9 @@ Bot 自动识别 Topic 对应的用户
 
 ### 垃圾信息检测不工作
 
-1. 检查 LLM API 配置（URL、Key、Model）
+1. 检查所选服务的配置：`llm` 检查 URL、Key、Model；`jev` 检查 `JEV_KEY`
 2. 查看日志确认 API 调用是否成功
-3. 测试 API 是否可访问：`curl -H "Authorization: Bearer $LLM_KEY" $LLM_API/models`
+3. 使用 `llm` 时可检查 API：`curl -H "Authorization: Bearer $LLM_KEY" "$LLM_API/models"`
 
 ### 管理员回复失败
 

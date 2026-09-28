@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { noul, TypeSafeClient } from '@typesafe-ai/sdk';
 import { Env } from '@/env';
 import {
   SPAM_DETECTION_SYSTEM_PROMPT,
@@ -70,6 +71,34 @@ export async function detectSpam(
   senderName: string,
   messageText: string
 ): Promise<string> {
+  if (env.SPAM_PROVIDER === 'jev') {
+    if (!env.JEV_KEY) throw new Error('Missing required environment variable: JEV_KEY');
+
+    const { answers } = await new TypeSafeClient({
+      apiKey: env.JEV_KEY,
+      timeout: 5000,
+      retry: { maxRetries: 0 }
+    }).systemOne({
+      model: 'jev-latest',
+      state: { senderName, messageText },
+      questions: {
+        spam: noul(
+          'Is `messageText` from `senderName` unwanted spam, advertising, a scam, phishing, harassment, or malicious content in a one-to-one conversation? Judge the message itself; when uncertain, lean toward legitimate conversation.',
+          {
+            true: 'Unwanted promotion, scam, phishing, harassment, or malicious content',
+            false: 'Legitimate conversation or uncertain intent'
+          }
+        )
+      }
+    });
+
+    const probability = answers.spam?.noul;
+    if (typeof probability !== 'number' || !Number.isFinite(probability) || probability < 0 || probability > 1) {
+      throw new Error('Jev API returned an invalid spam probability');
+    }
+    return probability >= 0.85 ? `SPAM: Jev 垃圾概率 ${probability.toFixed(2)}` : 'CLEAN';
+  }
+
   // 填充用户 prompt 模板
   const userPrompt = fillPromptTemplate(SPAM_DETECTION_USER_PROMPT, {
     senderName,

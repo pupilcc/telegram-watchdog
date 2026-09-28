@@ -9,8 +9,10 @@ export type Env = {
   BOT_SECRET: string;
   ADMIN_UID: string;
   ADMIN_GID: string;
+  SPAM_PROVIDER?: string;
   LLM_API: string;
   LLM_MODEL: string;
   LLM_KEY: string;
+  JEV_KEY?: string;
   DB: DBClient;
 };

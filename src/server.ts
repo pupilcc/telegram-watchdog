@@ -17,6 +17,10 @@ function requireEnv(key: string): string {
 }
 
 function buildEnv(): { env: Env; sqlite: DatabaseSync } {
+  const spamProvider = process.env.SPAM_PROVIDER ?? 'llm';
+  if (spamProvider !== 'llm' && spamProvider !== 'jev') {
+    throw new Error('SPAM_PROVIDER must be llm or jev');
+  }
   const dbPath = process.env.DB_PATH ?? '/data/watchdog.db';
   const sqlite = new DatabaseSync(dbPath);
   sqlite.exec('PRAGMA journal_mode = WAL');
@@ -30,9 +34,11 @@ function buildEnv(): { env: Env; sqlite: DatabaseSync } {
       BOT_SECRET: requireEnv('BOT_SECRET'),
       ADMIN_UID: requireEnv('ADMIN_UID'),
       ADMIN_GID: process.env.ADMIN_GID ?? '',
-      LLM_API: requireEnv('LLM_API'),
+      SPAM_PROVIDER: spamProvider,
+      LLM_API: spamProvider === 'llm' ? requireEnv('LLM_API') : '',
       LLM_MODEL: process.env.LLM_MODEL ?? 'gpt-3.5-turbo',
-      LLM_KEY: requireEnv('LLM_KEY'),
+      LLM_KEY: spamProvider === 'llm' ? requireEnv('LLM_KEY') : '',
+      JEV_KEY: spamProvider === 'jev' ? requireEnv('JEV_KEY') : undefined,
       DB: createSqliteClient(sqlite),
     },
   };
