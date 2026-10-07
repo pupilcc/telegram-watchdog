@@ -32,6 +32,12 @@ export const messageFilterMiddleware = (env: Env) => async (ctx: Context, next: 
     return;
   }
 
+  // 管理员消息直接放行，不参与白名单统计或 AI 检测
+  if (senderUser.id === Number(env.ADMIN_UID)) {
+    await next();
+    return;
+  }
+
   // 获取发送者的姓名
   const senderName = `${senderUser.first_name || ''}${senderUser.last_name ? ' ' + senderUser.last_name : ''}`.trim();
 
