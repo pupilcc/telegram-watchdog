@@ -137,7 +137,7 @@ npm run deploy
 镜像由 GitHub Actions 自动构建并推送到 GHCR（基于 `node:24-bookworm-slim`，无原生模块编译）：
 
 - **镜像地址**：`ghcr.io/pupilcc/telegram-watchdog:latest`
-- **CI 配置**：[.github/workflows/release-docker-image.yml](.github/workflows/release-docker-image.yml) — `master` 分支推送和打 tag 时自动发布
+- **CI 配置**：[.github/workflows/docker.yml](.github/workflows/docker.yml) — `master` 分支推送和打 tag 时自动发布
 
 #### B1. 准备部署文件和 `.env`
 
