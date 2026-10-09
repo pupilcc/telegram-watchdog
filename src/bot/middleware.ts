@@ -9,7 +9,7 @@ import {
   checkAndPromoteToWhitelist,
 } from '@/db/trust';
 import { WHITELIST_CONFIG } from '@/config';
-import { getOrCreateSpamTopic } from '@/bot/forum';
+import { getOrCreateSpamTopic, unpinTopicStarterMessage } from '@/bot/forum';
 
 
 export const messageFilterMiddleware = (env: Env) => async (ctx: Context, next: NextFunction) => {
@@ -89,15 +89,20 @@ export const messageFilterMiddleware = (env: Env) => async (ctx: Context, next: 
       // 发送到管理群组（如果配置了管理群组 ID）
       if (env.ADMIN_GID && chatId) {
         // 获取或创建 Spam Topic
-        const spamTopicId = await getOrCreateSpamTopic(ctx.api, env);
+        const spamTopic = await getOrCreateSpamTopic(ctx.api, env);
 
         // 先转发原消息到管理群组（如果有 Topic 则发送到 Topic）
         const forwardedMessage = await ctx.api.forwardMessage(
           env.ADMIN_GID,
           chatId,
           ctx.message.message_id,
-          spamTopicId ? { message_thread_id: spamTopicId } : undefined
+          spamTopic ? { message_thread_id: spamTopic.topicId } : undefined
         );
+
+        // Telegram 会自动置顶新 Topic 的首条消息，须在转发后取消。
+        if (spamTopic?.created) {
+          await unpinTopicStarterMessage(ctx.api, env.ADMIN_GID, forwardedMessage.message_id);
+        }
 
         // 获取当前时间并格式化为 UTC+8 (yyyy-MM-dd HH:mm:ss)
         const now = new Date();
@@ -122,7 +127,7 @@ export const messageFilterMiddleware = (env: Env) => async (ctx: Context, next: 
           `时间: ${utcPlus8Time}`,
           {
             reply_to_message_id: forwardedMessage.message_id,
-            ...(spamTopicId ? { message_thread_id: spamTopicId } : {})
+            ...(spamTopic ? { message_thread_id: spamTopic.topicId } : {})
           }
         );
       }

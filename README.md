@@ -80,6 +80,7 @@ Telegram Watchdog 是一个功能强大的 Telegram 机器人，主要用于：
    - 在群组设置中启用 **Topics / 话题** 功能
    - 将 Bot 添加到群组并设为管理员
    - 在 Bot 的管理员权限中开启 **Manage Topics / 管理话题**（Telegram Bot API 权限名为 `can_manage_topics`）
+   - 开启 **Pin Messages / 置顶消息**（`can_pin_messages`），用于取消 Telegram 对新话题首条消息的自动置顶
    - 在群组内发送 `/getid`，Bot 会返回群组 ID（负数，如：`-1001234567890`）
    - 将返回的群组 ID 配置为 `ADMIN_GID`
 
@@ -514,6 +515,7 @@ export const WHITELIST_CONFIG = {
 2. **Bot 权限**：
    - 将 Bot 添加为群组管理员
    - 在 Bot 的管理员权限中开启 **Manage Topics / 管理话题**（Telegram Bot API 权限名为 `can_manage_topics`）
+   - 开启 **Pin Messages / 置顶消息**（`can_pin_messages`），用于取消新话题首条消息的自动置顶；取消失败只记录警告，不影响消息转发
    - 确认 `.env` / 部署环境中的 `ADMIN_GID` 指向这个已开启 Topics 的超级群组，通常以 `-100` 开头
 
 如果日志中出现 `Bad Request: not enough rights to create a topic`，说明 Bot 已经尝试创建 Topic，但当前群组权限不足。请重新检查该 Bot 是否是目标管理群的管理员，并且是否开启了 **管理话题** 权限。

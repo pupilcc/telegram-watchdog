@@ -1,6 +1,6 @@
 import { Context } from "grammy";
 import { Env } from '@/env';
-import { getOrCreateUserTopic } from '@/bot/forum';
+import { getOrCreateUserTopic, unpinTopicStarterMessage } from '@/bot/forum';
 import { getUserIdByTopicId } from '@/db/topics';
 
 /**
@@ -42,15 +42,20 @@ export const messageHandler = (env: Env) => async (ctx: Context) => {
       // 如果配置了管理群组，使用 Topic 模式
       if (adminGid) {
         // 获取或创建用户专属 Topic
-        const userTopicId = await getOrCreateUserTopic(ctx.api, env, String(senderId), displayName);
+        const userTopic = await getOrCreateUserTopic(ctx.api, env, String(senderId), displayName);
 
         // 转发到管理群组（如果有 Topic 则发送到 Topic）
         const forwardedMessage = await ctx.api.forwardMessage(
           adminGid,
           senderId,
           ctx.message.message_id,
-          userTopicId ? { message_thread_id: userTopicId } : undefined
+          userTopic ? { message_thread_id: userTopic.topicId } : undefined
         );
+
+        // Telegram 会自动置顶新 Topic 的首条消息，须在转发后取消。
+        if (userTopic?.created) {
+          await unpinTopicStarterMessage(ctx.api, adminGid, forwardedMessage.message_id);
+        }
 
         // 存储消息映射关系
         await env.DB.prepare(`
